@@ -5,14 +5,15 @@
 
 from openerp import models, fields, api
 from openerp.addons import decimal_precision as dp
-
+import logging
+_logger = logging.getLogger(__name__)
 
 class AccountOperationRule(models.Model):
     _name = 'account.operation.rule'
 
     _order = 'sequence ASC, id ASC'
 
-    name = fields.Char()
+    name = fields.Char(help="Use this field to prefilter on the statement line memo")
     rule_type = fields.Selection(
         selection=[('rounding', 'Roundings'),
                    ('currency', 'Currencies')],
@@ -73,7 +74,9 @@ class AccountOperationRule(models.Model):
         if self._is_multicurrency(statement_line):
             return False
         currency = statement_line.currency_for_rules()
-        return self._balance_in_range(balance, currency)
+        valid = self._balance_in_range(balance, currency)
+        _logger.debug("VALID %s" % valid)
+        return valid
 
     @api.multi
     def _is_valid_multicurrency(self, statement_line, move_lines, balance):
@@ -121,6 +124,12 @@ class AccountOperationRule(models.Model):
                         rule when called on multiple rules.
         """
         self.ensure_one()
+#        if self.name
+        _logger.debug("#### statement_line %s" % statement_line)
+        _logger.debug("#### move_lines %s" % move_lines)
+        if self.name and not self.name in statement_line.name :
+            _logger.debug("NO MATCHING %s ON NAME %s " % (self.name, statement_line.name))
+            return False
         if self.rule_type == 'rounding':
             return self._is_valid_balance(statement_line, balance)
         elif self.rule_type == 'currency':
