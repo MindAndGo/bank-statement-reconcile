@@ -20,9 +20,7 @@ class MassReconcileAdvancedTransactionRef(models.TransientModel):
 
     @api.multi
     def _matchers(self, move_line):
-        return (('date', move_line['date']),
-                #('ref', move_line['name'].lower()[:move_line['name'].find(': ')].strip())
-                )
+        return (('date', move_line['date']),)
 
     @api.multi
     def _opposite_matchers(self, move_line):
